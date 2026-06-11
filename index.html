@@ -159,7 +159,8 @@
   <header class="app-header">
     <div style="text-align:center">
       <div class="logo-mark">MakeX</div>
-      <div class="logo-sub">Creative · Explore · Conquer</div>
+      <button onclick="(function(){var d=localStorage.getItem(`"makex_courses`");if(d){var b=new Blob([d],{type:`"application/json`"});var a=document.createElement(`"a`");a.href=URL.createObjectURL(b);a.download=`"makex_data.json`";document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(b)}else{alert(`"无数据`")}})()" style="position:absolute;right:40px;top:24px;font-size:11px;font-family:var(--mono);background:rgba(41,121,255,0.12);color:#2979ff;border:1px solid rgba(41,121,255,0.2);border-radius:4px;padding:4px 12px;cursor:pointer;letter-spacing:1px">📥 导出</button>
+<div class="logo-sub">Creative · Explore · Conquer</div>
       <span id="ws-status" style="position:absolute;right:40px;top:24px;font-size:11px;font-family:var(--mono);color:var(--text-dim);letter-spacing:1px">○ 离线</span>
     </div>
   </header>
@@ -292,6 +293,11 @@
     </div>
   </div></div>
 
+if(location.search.indexOf('export')>=0||location.hash.indexOf('export')>=0){
+try{var d=localStorage.getItem('makex_courses');if(d){var p=JSON.parse(d);
+document.body.innerHTML='<pre style="color:#fff;background:#060a16;padding:20px;font-size:13px;word-wrap:break-word;white-space:pre-wrap;min-height:100vh">'+JSON.stringify(p,null,2)+'</pre><div style="position:fixed;top:10px;right:10px;z-index:9999"><button onclick="navigator.clipboard.writeText(localStorage.getItem(\'makex_courses\')).then(function(){alert(\'已复制到剪贴板\')})" style="padding:10px 20px;background:#2979ff;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px">📋 复制数据</button><button onclick="(function(){var d=localStorage.getItem(\'makex_courses\');if(d){var b=new Blob([d],{type:\'application/json\'});var a=document.createElement(\'a\');a.href=URL.createObjectURL(b);a.download=\'makex_data.json\';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(b)}})()" style="margin-left:8px;padding:10px 20px;background:#00e5ff;color:#000;border:none;border-radius:4px;cursor:pointer;font-size:14px">💾 下载文件</button></div>'}
+}catch(e){}
+}
 <script>
 var STORAGE_KEY = 'makex_courses';
 var syncTimer = null;
