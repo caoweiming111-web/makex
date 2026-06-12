@@ -309,28 +309,6 @@ t+=c.v+' ('+c.d+')\n';
 for(var j=0;j<c.m.length;j++)t+='  • '+c.m[j]+'\n';t+='\n'}
 alert(t);
 }
-var syncTimer = null;
-var lastSyncData = null;
-var syncConnected = false;
-function pollData(){
-fetch('/data.json').then(function(r){
-if(!r.ok)throw Error();
-return r.json();
-}).then(function(d){
-syncConnected = true;
-var el = document.getElementById('ws-status');
-if(el)el.textContent = '● 在线';
-var key = JSON.stringify(d);
-if(key !== lastSyncData){
-lastSyncData = key;
-var oldCat = currentCategory;
-data = d;
-if(!data||!data.inspire)data = loadData();
-localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-updateCounts();
-var vc = document.getElementById('view-category');
-if(vc.classList.contains('active') && oldCat) renderCategory(oldCat);
-}
 }).catch(function(){
 syncConnected = false;
 var el = document.getElementById('ws-status');
@@ -339,7 +317,6 @@ if(el)el.textContent = '○ 离线';
 }
 var data = loadData();
 pollData();
-syncTimer = setInterval(pollData, 3000);
 var currentCategory = 'inspire';
 var docContext = null;
 var CATS = {inspire:{label:'Inspire',accent:'accent-blue',color:'#2979ff'},explorer:{label:'Explorer',accent:'accent-cyan',color:'#00e5ff'},challenge:{label:'Challenge',accent:'accent-red',color:'#ff1744'}};
@@ -351,7 +328,7 @@ function defaultData(){return{inspire:Array.from({length:48},emptySlot),explorer
 function loadData(){try{var r=localStorage.getItem(STORAGE_KEY);if(r){var p=JSON.parse(r);var keys=['inspire','explorer','challenge'];for(var k=0;k<keys.length;k++){var key=keys[k];if(!Array.isArray(p[key])){p[key]=Array.from({length:48},emptySlot)}else{if(p[key].length<48)p[key]=p[key].concat(Array.from({length:48-p[key].length},emptySlot))};for(var i=0;i<p[key].length;i++){if(typeof p[key][i]==='string'){p[key][i]={name:p[key][i],subtitle:'',equipment:'',objectives:'',procedure:''}}}}};return p}}catch(e){return defaultData()}
 return p}}catch(e){}return defaultData()}
 
-function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));updateCounts();try{fetch('/update',{method:'POST',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}})}catch(e){}}
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));updateCounts()}
 
 function addSlot(cat){
 var arr=data[cat];
