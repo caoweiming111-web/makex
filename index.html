@@ -295,6 +295,19 @@
 
 <script>
 var STORAGE_KEY = 'makex_courses';
+var APP_VERSION = 'v1.0.2';
+var CHANGE_LOG = [
+  {v:'v1.0.2',d:'2026.06.12',m:['优化生成图片高度，内容不再被截断','删除按钮仅显示在新增课程（49+）','版本号提示功能']},
+  {v:'v1.0.1',d:'2026.06.11',m:['添加"+ 添加课程"按钮，支持无限课程数量','删除按钮（仅新增课程可用）']},
+  {v:'v1.0.0',d:'2026.06.11',m:['初始版本：3 级别 × 48 课程','课程编辑、文档生成、智能粘贴']}
+];
+function showChangelog(){
+var t='📋 MakeX 更新日志\n================================\n当前版本: '+APP_VERSION+'\n\n';
+for(var i=0;i<CHANGE_LOG.length;i++){var c=CHANGE_LOG[i];
+t+=c.v+' ('+c.d+')\n';
+for(var j=0;j<c.m.length;j++)t+='  • '+c.m[j]+'\n';t+='\n'}
+alert(t);
+}
 var syncTimer = null;
 var lastSyncData = null;
 var syncConnected = false;
