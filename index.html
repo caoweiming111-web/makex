@@ -163,7 +163,6 @@
 <div class="logo-sub">Creative · Explore · Conquer</div>
       <span id="ws-status" style="position:absolute;right:40px;top:24px;font-size:11px;font-family:var(--mono);color:var(--text-dim);letter-spacing:1px">○ 离线</span>
     </div>
-      <div style="position:absolute;left:40px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:8px"><span style="font-size:10px;font-family:var(--mono);background:rgba(41,121,255,0.15);color:#2979ff;padding:3px 10px;border-radius:4px;border:1px solid rgba(41,121,255,0.25);letter-spacing:1px;cursor:pointer" onclick="showChangelog()" title="点击查看更新日志">v1.0.2</span><span style="font-size:9px;color:var(--text-dim);letter-spacing:0.5px;font-family:var(--mono)"></span></div>
   </header>
 
   <!-- ===== VIEW: MAIN ===== -->
@@ -309,6 +308,28 @@ t+=c.v+' ('+c.d+')\n';
 for(var j=0;j<c.m.length;j++)t+='  • '+c.m[j]+'\n';t+='\n'}
 alert(t);
 }
+var syncTimer = null;
+var lastSyncData = null;
+var syncConnected = false;
+function pollData(){
+fetch('/data.json').then(function(r){
+if(!r.ok)throw Error();
+return r.json();
+}).then(function(d){
+syncConnected = true;
+var el = document.getElementById('ws-status');
+if(el)el.textContent = '● 在线';
+var key = JSON.stringify(d);
+if(key !== lastSyncData){
+lastSyncData = key;
+var oldCat = currentCategory;
+data = d;
+if(!data||!data.inspire)data = loadData();
+localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+updateCounts();
+var vc = document.getElementById('view-category');
+if(vc.classList.contains('active') && oldCat) renderCategory(oldCat);
+}
 }).catch(function(){
 syncConnected = false;
 var el = document.getElementById('ws-status');
@@ -317,6 +338,7 @@ if(el)el.textContent = '○ 离线';
 }
 var data = loadData();
 pollData();
+syncTimer = setInterval(pollData, 3000);
 var currentCategory = 'inspire';
 var docContext = null;
 var CATS = {inspire:{label:'Inspire',accent:'accent-blue',color:'#2979ff'},explorer:{label:'Explorer',accent:'accent-cyan',color:'#00e5ff'},challenge:{label:'Challenge',accent:'accent-red',color:'#ff1744'}};
@@ -325,10 +347,10 @@ function emptySlot(){return{name:'',subtitle:'',equipment:'',objectives:'',proce
 
 function defaultData(){return{inspire:Array.from({length:48},emptySlot),explorer:Array.from({length:48},emptySlot),challenge:Array.from({length:48},emptySlot)}}
 
-function loadData(){try{var r=localStorage.getItem(STORAGE_KEY);if(r){var p=JSON.parse(r);var keys=['inspire','explorer','challenge'];for(var k=0;k<keys.length;k++){var key=keys[k];if(!Array.isArray(p[key])){p[key]=Array.from({length:48},emptySlot)}else{if(p[key].length<48)p[key]=p[key].concat(Array.from({length:48-p[key].length},emptySlot))};for(var i=0;i<p[key].length;i++){if(typeof p[key][i]==='string'){p[key][i]={name:p[key][i],subtitle:'',equipment:'',objectives:'',procedure:''}}}}};return p}}catch(e){return defaultData()}
+function loadData(){try{var r=localStorage.getItem(STORAGE_KEY);if(r){var p=JSON.parse(r);var keys=['inspire','explorer','challenge'];for(var k=0;k<keys.length;k++){var key=keys[k];if(!Array.isArray(p[key]))p[key]=Array.from({length:Math.max(48,p[key].length)},emptySlot);if(p[key].length<48)p[key]=p[key].concat(Array.from({length:48-p[key].length},emptySlot));else{for(var i=0;i<p[key].length;i++){if(typeof p[key][i]==='string'){p[key][i]={name:p[key][i],subtitle:'',equipment:'',objectives:'',procedure:''}}}}}
 return p}}catch(e){}return defaultData()}
 
-function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));updateCounts()}
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));updateCounts();try{fetch('/update',{method:'POST',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}})}catch(e){}}
 
 function addSlot(cat){
 var arr=data[cat];
@@ -393,7 +415,7 @@ var hh=82
 var infoH=20+fh(name,fw)+fh(subtitle,fw)+fh(eq,fw)+8
 var objH=20+Math.max(wrapH(obj||'(未填写)',fw,tctx,lh),lh)+8
 var proH=20+Math.max(wrapH(pro||'(未填写)',fw,tctx,lh),lh)
-var H=8000;
+var H=Math.ceil(82+hh+infoH+objH+proH+24+20+p+150)
 
 var cv=document.createElement('canvas');cv.width=W;cv.height=H;var cx=cv.getContext('2d')
 
@@ -501,7 +523,7 @@ ypos=secLabel('课程基本流程',x,ypos,catColor)
 ypos=drawText(pro||'(未填写)',x+cw-24-20,ypos,cw-24-24,'#e0e4ea',14)
 
 // Footer
-ypos=Math.max(ypos+24,60+22+hh+infoH+objH+proH+44)
+ypos=Math.max(ypos+24,cy0+ch0-40)
 cx.strokeStyle='rgba(41,121,255,0.06)';cx.lineWidth=1
 cx.beginPath();cx.moveTo(x,ypos);cx.lineTo(x+cw-48,ypos);cx.stroke()
 cx.font='11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';cx.fillStyle='#556688'
@@ -509,6 +531,7 @@ var now=new Date();var ds=now.toLocaleDateString('zh-CN',{timeZone:'Asia/Shangha
 cx.fillText(ds+' · MakeX · '+info.label,x,ypos+20)
 
 // 根据实际绘制位置扩展 canvas（防止内容被截断）
+if(ypos+50>H){
 var newH=Math.ceil(ypos+80);
 var oldImg=cv.getContext('2d').getImageData(0,0,W,H);
 cv.height=newH;
@@ -516,13 +539,6 @@ H=newH;
 var bg2=cx.createLinearGradient(0,0,0,H);bg2.addColorStop(0,'#060a16');bg2.addColorStop(0.5,'#0c1428');bg2.addColorStop(1,'#060a16');
 cx.fillStyle=bg2;cx.fillRect(0,0,W,H);
 cx.putImageData(oldImg,0,0);
-}
-// 裁剪 canvas 到实际内容大小
-var finalH=Math.min(Math.ceil(ypos+80),H);
-if(finalH<H){
-var cropCv=document.createElement('canvas');cropCv.width=W;cropCv.height=finalH;
-cropCv.getContext('2d').drawImage(cv,0,0);
-cv=cropCv;
 }
 // Copy to clipboard
 cv.toBlob(function(blob){
