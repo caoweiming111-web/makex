@@ -416,7 +416,7 @@ var hh=82
 var infoH=20+fh(name,fw)+fh(subtitle,fw)+fh(eq,fw)+8
 var objH=20+Math.max(wrapH(obj||'(未填写)',fw,tctx,lh),lh)+8
 var proH=20+Math.max(wrapH(pro||'(未填写)',fw,tctx,lh),lh)
-var H=Math.ceil(82+hh+infoH+objH+proH+24+20+p+150)
+var H=8000;
 
 var cv=document.createElement('canvas');cv.width=W;cv.height=H;var cx=cv.getContext('2d')
 
@@ -524,7 +524,7 @@ ypos=secLabel('课程基本流程',x,ypos,catColor)
 ypos=drawText(pro||'(未填写)',x+cw-24-20,ypos,cw-24-24,'#e0e4ea',14)
 
 // Footer
-ypos=Math.max(ypos+24,cy0+ch0-40)
+ypos=Math.max(ypos+24,60+22+hh+infoH+objH+proH+44)
 cx.strokeStyle='rgba(41,121,255,0.06)';cx.lineWidth=1
 cx.beginPath();cx.moveTo(x,ypos);cx.lineTo(x+cw-48,ypos);cx.stroke()
 cx.font='11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';cx.fillStyle='#556688'
@@ -532,7 +532,6 @@ var now=new Date();var ds=now.toLocaleDateString('zh-CN',{timeZone:'Asia/Shangha
 cx.fillText(ds+' · MakeX · '+info.label,x,ypos+20)
 
 // 根据实际绘制位置扩展 canvas（防止内容被截断）
-if(ypos+50>H){
 var newH=Math.ceil(ypos+80);
 var oldImg=cv.getContext('2d').getImageData(0,0,W,H);
 cv.height=newH;
@@ -540,6 +539,13 @@ H=newH;
 var bg2=cx.createLinearGradient(0,0,0,H);bg2.addColorStop(0,'#060a16');bg2.addColorStop(0.5,'#0c1428');bg2.addColorStop(1,'#060a16');
 cx.fillStyle=bg2;cx.fillRect(0,0,W,H);
 cx.putImageData(oldImg,0,0);
+}
+// 裁剪 canvas 到实际内容大小
+var finalH=Math.min(Math.ceil(ypos+80),H);
+if(finalH<H){
+var cropCv=document.createElement('canvas');cropCv.width=W;cropCv.height=finalH;
+cropCv.getContext('2d').drawImage(cv,0,0);
+cv=cropCv;
 }
 // Copy to clipboard
 cv.toBlob(function(blob){
