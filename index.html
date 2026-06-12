@@ -173,19 +173,19 @@
         <div class="card-main-icon">🚀</div>
         <div class="card-main-title">Inspire</div>
         <div class="card-main-desc">灵感 · 启蒙 · 创造的火花</div>
-        <div class="card-main-count"><span id="count-inspire">0</span> / 48</div>
+        <div class="card-main-count"><span id="count-inspire">0</span> / <span id="total-inspire">48</span></div>
       </div>
       <div class="card-main card-explorer" onclick="openCategory('explorer')">
         <div class="card-main-icon">🔭</div>
         <div class="card-main-title">Explorer</div>
         <div class="card-main-desc">探索 · 发现 · 未知的边界</div>
-        <div class="card-main-count"><span id="count-explorer">0</span> / 48</div>
+        <div class="card-main-count"><span id="count-explorer">0</span> / <span id="total-explorer">48</span></div>
       </div>
       <div class="card-main card-challenge" onclick="openCategory('challenge')">
         <div class="card-main-icon">⚡</div>
         <div class="card-main-title">Challenge</div>
         <div class="card-main-desc">挑战 · 突破 · 极限的超越</div>
-        <div class="card-main-count"><span id="count-challenge">0</span> / 48</div>
+        <div class="card-main-count"><span id="count-challenge">0</span> / <span id="total-challenge">48</span></div>
       </div>
     </div>
     <div style="text-align:center;margin-top:48px">
@@ -200,7 +200,7 @@
     <div class="cat-header">
       <button class="btn-back" onclick="goHome()">← 返回</button>
       <div class="cat-title" id="cat-title">INSPIRE</div>
-      <span class="cat-slot-info">SLOTS 01–48</span>
+      <span class="cat-slot-info">课程列表</span>
     </div>
     <div id="slot-container" class="slot-grid"></div>
   </div>
@@ -334,20 +334,31 @@ function emptySlot(){return{name:'',subtitle:'',equipment:'',objectives:'',proce
 
 function defaultData(){return{inspire:Array.from({length:48},emptySlot),explorer:Array.from({length:48},emptySlot),challenge:Array.from({length:48},emptySlot)}}
 
-function loadData(){try{var r=localStorage.getItem(STORAGE_KEY);if(r){var p=JSON.parse(r);var keys=['inspire','explorer','challenge'];for(var k=0;k<keys.length;k++){var key=keys[k];if(!Array.isArray(p[key])||p[key].length!==48)p[key]=Array.from({length:48},emptySlot);else{for(var i=0;i<p[key].length;i++){if(typeof p[key][i]==='string'){p[key][i]={name:p[key][i],subtitle:'',equipment:'',objectives:'',procedure:''}}}}}
+function loadData(){try{var r=localStorage.getItem(STORAGE_KEY);if(r){var p=JSON.parse(r);var keys=['inspire','explorer','challenge'];for(var k=0;k<keys.length;k++){var key=keys[k];if(!Array.isArray(p[key]))p[key]=Array.from({length:Math.max(48,p[key].length)},emptySlot);if(p[key].length<48)p[key]=p[key].concat(Array.from({length:48-p[key].length},emptySlot));else{for(var i=0;i<p[key].length;i++){if(typeof p[key][i]==='string'){p[key][i]={name:p[key][i],subtitle:'',equipment:'',objectives:'',procedure:''}}}}}
 return p}}catch(e){}return defaultData()}
 
 function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(data));updateCounts();try{fetch('/update',{method:'POST',body:JSON.stringify(data),headers:{'Content-Type':'application/json'}})}catch(e){}}
+
+function addSlot(cat){
+var arr=data[cat];
+var newSlot=emptySlot();
+newSlot.name='新课程 '+(arr.length+1);
+arr.push(newSlot);
+saveData();
+renderCategory(cat);
+}
+
 function pad(n){return n<10?'0'+n:''+n}
 
 function updateCounts(){var cats=['inspire','explorer','challenge'];for(var c=0;c<cats.length;c++){var cat=cats[c];var n=0;for(var i=0;i<data[cat].length;i++){var s=data[cat][i];if(s.name&&s.name.trim()!=='')n++}var el=document.getElementById('count-'+cat);if(el)el.textContent=n}
+var cats2=["inspire","explorer","challenge"];for(var c2=0;c2<cats2.length;c2++){var el2=document.getElementById("total-"+cats2[c2]);if(el2)el2.textContent=data[cats2[c2]].length}
 var t=0;for(var c=0;c<cats.length;c++){for(var i=0;i<data[cats[c]].length;i++){if(data[cats[c]][i].name&&data[cats[c]][i].name.trim())t++}}var el=document.getElementById('total-saved');if(el)el.textContent=t}
 
 function openCategory(cat){currentCategory=cat;document.getElementById('view-main').classList.remove('active');document.getElementById('view-category').classList.add('active');renderCategory(cat)}
 function goHome(){document.getElementById('view-category').classList.remove('active');document.getElementById('view-main').classList.add('active')}
 
 function renderCategory(cat){var info=CATS[cat];document.getElementById('cat-title').textContent=info.label;document.getElementById('cat-title').className='cat-title '+info.accent;var container=document.getElementById('slot-container');container.innerHTML='';var arr=data[cat]
-for(var i=0;i<48;i++){let idx=i;var num=pad(i+1);var slot=arr[i]||emptySlot();var val=slot.name||'';var row=document.createElement('div');row.className='slot-row'
+for(var i=0;i<arr.length;i++){let idx=i;var num=pad(i+1);var slot=arr[i]||emptySlot();var val=slot.name||'';var row=document.createElement('div');row.className='slot-row'
 var numEl=document.createElement('div');numEl.className='slot-num';numEl.textContent=num;row.appendChild(numEl)
 var wrap=document.createElement('div');wrap.className='slot-input-wrap';var input=document.createElement('input');input.type='text';input.className='slot-input'+(val?' saved':'');input.placeholder='输入课程名称...';input.value=val;input.dataset.index=idx
 input.addEventListener('input',function(){var idx=parseInt(this.dataset.index);arr[idx].name=this.value;saveData();if(this.value.trim()){this.classList.add('saved')}else{this.classList.remove('saved')}
@@ -360,7 +371,9 @@ row.appendChild(saveBtn)
 var openBtn=document.createElement('button');openBtn.className='btn-icon btn-open active';openBtn.textContent='打开'
 openBtn.addEventListener('click',function(){openDocument(cat,idx)})
 row.appendChild(openBtn);container.appendChild(row)}
-var rows=container.querySelectorAll('.slot-row');for(var i=0;i<rows.length;i++){(function(el,idx){el.style.opacity='0';el.style.transform='translateY(8px)';setTimeout(function(){el.style.transition='all 0.3s ease-out';el.style.opacity='1';el.style.transform='translateY(0)'},idx*20)})(rows[i],i)}}
+var rows=container.querySelectorAll('.slot-row');for(var i=0;i<rows.length;i++){(function(el,idx){el.style.opacity='0';el.style.transform='translateY(8px)';setTimeout(function(){el.style.transition='all 0.3s ease-out';el.style.opacity='1';el.style.transform='translateY(0)'},idx*20)})(rows[i],i)}
+
+var addBtn=document.createElement('div');addBtn.style.cssText='padding:12px 16px;margin-top:8px;border-radius:8px;border:2px dashed rgba(41,121,255,0.25);background:rgba(41,121,255,0.04);cursor:pointer;text-align:center;transition:all 0.25s;font-size:14px;color:#2979ff;letter-spacing:1px';addBtn.textContent='+ 添加课程';addBtn.onmouseover=function(){this.style.borderColor='rgba(41,121,255,0.5)';this.style.background='rgba(41,121,255,0.08)'};addBtn.onmouseout=function(){this.style.borderColor='rgba(41,121,255,0.25)';this.style.background='rgba(41,121,255,0.04)'};addBtn.onclick=function(){addSlot(cat)};container.appendChild(addBtn)}
 
 
 /* ===== GENERATE IMAGE ===== */
@@ -623,4 +636,3 @@ updateCounts();
 </script>
 </body>
 </html>
-
