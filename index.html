@@ -57,7 +57,7 @@
   .cat-title.accent-red{color:var(--red)}
   .cat-slot-info{font-size:12px;color:var(--text-dim);font-family:var(--mono);letter-spacing:1px;margin-left:16px}
   .slot-grid{display:flex;flex-direction:column;gap:6px}
-  .slot-row{display:grid;grid-template-columns:52px 1fr 80px 80px;gap:10px;align-items:center;padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.2s}
+  .slot-row{display:grid;grid-template-columns:52px 1fr 70px 70px 70px;gap:10px;align-items:center;padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.04);transition:all 0.2s}
   .slot-row:hover{background:rgba(255,255,255,0.04);border-color:var(--border)}
   .slot-num{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--text-dim);text-align:center;letter-spacing:1px}
   .slot-input-wrap{position:relative}
@@ -71,7 +71,7 @@
   .btn-save:active{transform:scale(0.96)}
   .btn-open{background:rgba(255,255,255,0.04);color:var(--text-dim);border:1px solid rgba(255,255,255,0.08)}
   .btn-open:hover{background:rgba(255,255,255,0.08);color:var(--text)}
-  .btn-open:active{transform:scale(0.96)}
+  .btn-open:active{transform:scale(0.96)}.btn-icon-del{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:6px 8px;border:none;cursor:pointer;font-size:12px;font-family:var(--font);transition:all 0.2s;letter-spacing:0.5px;white-space:nowrap;background:rgba(255,23,68,0.08);color:var(--red);border:1px solid rgba(255,23,68,0.15);border-radius:4px}.btn-icon-del:hover{background:rgba(255,23,68,0.18)}.btn-icon-del:active{transform:scale(0.96)}
   .btn-open.active{color:var(--text);border-color:rgba(255,255,255,0.15)}
 
   /* ===== DOCUMENT EDITOR ===== */
@@ -134,7 +134,7 @@
     .doc-title{font-size:18px}
   }
   @media(max-width:480px){
-    .slot-row{grid-template-columns:36px 1fr 48px 48px;gap:4px;padding:5px 8px}
+    .slot-row{grid-template-columns:36px 1fr 48px 48px 48px;gap:4px;padding:5px 8px}
     .slot-input{font-size:13px;padding:5px 8px}
     .btn-icon{font-size:11px;padding:4px 8px}
     .card-main-title{font-size:22px}
@@ -370,7 +370,7 @@ saveSlotFile(cat,idx,v);this.textContent='已存';var self=this;setTimeout(funct
 row.appendChild(saveBtn)
 var openBtn=document.createElement('button');openBtn.className='btn-icon btn-open active';openBtn.textContent='打开'
 openBtn.addEventListener('click',function(){openDocument(cat,idx)})
-row.appendChild(openBtn);container.appendChild(row)}
+row.appendChild(openBtn);var delBtn=document.createElement("button");delBtn.className="btn-icon btn-icon-del";delBtn.textContent="删除";delBtn.onclick=function(){if(confirm("确定要删除「"+arr[idx].name+"」吗？")){data[cat].splice(idx,1);saveData();renderCategory(cat)}};row.appendChild(delBtn);container.appendChild(row)}
 var rows=container.querySelectorAll('.slot-row');for(var i=0;i<rows.length;i++){(function(el,idx){el.style.opacity='0';el.style.transform='translateY(8px)';setTimeout(function(){el.style.transition='all 0.3s ease-out';el.style.opacity='1';el.style.transform='translateY(0)'},idx*20)})(rows[i],i)}
 
 var addBtn=document.createElement('div');addBtn.style.cssText='padding:12px 16px;margin-top:8px;border-radius:8px;border:2px dashed rgba(41,121,255,0.25);background:rgba(41,121,255,0.04);cursor:pointer;text-align:center;transition:all 0.25s;font-size:14px;color:#2979ff;letter-spacing:1px';addBtn.textContent='+ 添加课程';addBtn.onmouseover=function(){this.style.borderColor='rgba(41,121,255,0.5)';this.style.background='rgba(41,121,255,0.08)'};addBtn.onmouseout=function(){this.style.borderColor='rgba(41,121,255,0.25)';this.style.background='rgba(41,121,255,0.04)'};addBtn.onclick=function(){addSlot(cat)};container.appendChild(addBtn)}
