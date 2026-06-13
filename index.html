@@ -185,9 +185,7 @@
       <button id="btn-dash" onclick="openDashboard()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-dim);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-family:var(--mono)">📊 统计</button>
       <button id="btn-print" onclick="printView()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-dim);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-family:var(--mono)">🖨️ 打印</button>
       <button id="btn-theme" onclick="toggleTheme()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-dim);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:11px;font-family:var(--mono)">🌓</button>
-      <select id="btn-lang" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-dim);padding:5px 10px;border-radius:4px;font-size:11px;font-family:var(--mono)">
-        <option value="zh">中文</option><option value="en">EN</option>
-      </select>
+      <button id="btn-lang" onclick="toggleLang()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--text-dim);padding:5px 10px;border-radius:4px;font-size:11px;font-family:var(--mono);cursor:pointer">中文</button>
 <span id="ws-status" style="position:absolute;right:40px;top:24px;font-size:11px;font-family:var(--mono);color:var(--text-dim);letter-spacing:1px">○ 离线</span>
 <div class="logo-sub">Creative · Explore · Conquer</div>
       <span id="ws-status" style="position:absolute;right:40px;top:24px;font-size:11px;font-family:var(--mono);color:var(--text-dim);letter-spacing:1px">○ 离线</span>
@@ -227,7 +225,7 @@
   <!-- ===== VIEW: CATEGORY ===== -->
   <div id="view-category" class="view">
     <div class="cat-header">
-      <button class="btn-back" onclick="goHome()">← 返回</button><input type="text" id="search-input" placeholder="搜索课程..." oninput="filterSlots()" style="padding:7px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.3);color:var(--text);font-size:13px;outline:none;width:200px">
+      <button class="btn-back" onclick="goHome()">← <span data-i18n="back">返回</span></button><input type="text" id="search-input" placeholder="搜索课程..." oninput="filterSlots()" style="padding:7px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.3);color:var(--text);font-size:13px;outline:none;width:200px">
       <div class="cat-title" id="cat-title">INSPIRE</div>
       <span class="cat-slot-info">课程列表</span>
     </div>
@@ -237,7 +235,7 @@
   <!-- ===== VIEW: DOCUMENT EDITOR ===== -->
   <div id="view-document" class="view">
     <div class="doc-header">
-      <button class="btn-back" onclick="closeDocument()">← 返回课程列表</button>
+      <button class="btn-back" onclick="closeDocument()">← <span data-i18n="back">返回课程列表</span></button>
       <div class="doc-title-group">
         <span class="doc-badge" id="doc-badge">INSPIRE · 01</span>
         <span class="doc-title" id="doc-title-display">课程文档</span>
@@ -693,7 +691,12 @@ function showToast(t){var e=document.getElementById("toast-container");if(!e){e=
 function getTheme(){return localStorage.getItem("makex_theme")||"dark"}
 function applyTheme(t){if(t==="light")document.documentElement.classList.add("light");else document.documentElement.classList.remove("light");localStorage.setItem("makex_theme",t)}
 function toggleTheme(){var t=getTheme();applyTheme(t==="light"?"dark":"light")}
-function setLang(l){localStorage.setItem("makex_lang",l);location.reload()}
+
+var I18N={zh:{dashboard:"统计",print:"打印",back:"返回",namePlaceholder:"输入课程名称...",searchPlaceholder:"搜索课程...",save:"保存",open:"打开",addCourse:"+ 添加课程",courseList:"课程列表"},en:{dashboard:"Stats",print:"Print",back:"Back",namePlaceholder:"Enter course name...",searchPlaceholder:"Search courses...",save:"Save",open:"Open",addCourse:"+ Add Course",courseList:"Course List"}};
+function toggleLang(){var cur=localStorage.getItem("makex_lang")||"zh";var next=cur==="zh"?"en":"zh";localStorage.setItem("makex_lang",next);applyLang(next)}
+function applyLang(l){var t=I18N[l]||I18N.zh;var b=document.getElementById("btn-lang");if(b)b.textContent=l==="zh"?"中文":"EN";var d=document.getElementById("btn-dash");if(d)d.innerHTML="📊 "+t.dashboard;var pb=document.getElementById("btn-print");if(pb)pb.innerHTML="🖨️ "+t.print;var bk=document.querySelectorAll(".btn-back");for(var i=0;i<bk.length;i++){var s=bk[i].querySelector("[data-i18n]");if(s)s.textContent=t.back}var si=document.querySelectorAll(".slot-input");for(var i=0;i<si.length;i++){if(si[i].placeholder)si[i].placeholder=t.namePlaceholder}var sv=document.querySelectorAll(".btn-save");for(var i=0;i<sv.length;i++){sv[i].textContent=t.save}var op=document.querySelectorAll(".btn-open");for(var i=0;i<op.length;i++){op[i].textContent=t.open}var ci=document.querySelector(".cat-slot-info");if(ci)ci.textContent=t.courseList;var sh=document.getElementById("search-input");if(sh)sh.placeholder=t.searchPlaceholder;var ac=document.getElementById("add-course-btn");if(ac)ac.textContent=t.addCourse}
+function setLang(l){applyLang(l)}
+try{var savedLang=localStorage.getItem("makex_lang");if(savedLang){applyLang(savedLang);var bl=document.getElementById("btn-lang");if(bl)bl.textContent=savedLang==="zh"?"中文":"EN"}}catch(e){}
 function filterSlots(){var q=document.getElementById("search-input").value.trim().toLowerCase();var rows=document.querySelectorAll("#slot-container .slot-row");var count=0;var nr=document.getElementById("search-no-result");if(nr)nr.remove();for(var i=0;i<rows.length;i++){var ip=rows[i].querySelector(".slot-input");var n=ip?ip.value.toLowerCase():"";if(!q||n.indexOf(q)!==-1){rows[i].classList.remove("hidden");count++}else{rows[i].classList.add("hidden")}}if(count===0){nr=document.createElement("div");nr.id="search-no-result";nr.style.cssText="padding:40px;text-align:center;color:var(--text-dim);font-size:14px";nr.textContent="无匹配结果";document.getElementById("slot-container").appendChild(nr)}}function flashSaveIndicator(){var e=document.getElementById("save-indicator");if(e){e.classList.add("visible");clearTimeout(e._t);e._t=setTimeout(function(){e.classList.remove("visible")},2000)}}
 function openDashboard(){var c=["inspire","explorer","challenge"],t=0,h="";for(var i=0;i<c.length;i++){var a=data[c[i]]||[],f=0;for(var j=0;j<a.length;j++){if(a[j].name&&a[j].name.trim())f++}var p=Math.round((f/48)*100),co=CATS[c[i]].color;h+="<div class=dash-card><div>"+CATS[c[i]].icon+" "+CATS[c[i]].label+"</div>";h+='<div class=dash-stat><span>总计</span><span style="font-size:18px;font-weight:700;color:'+co+'">48</span></div>';h+='<div class=dash-stat><span>已填</span><span style="font-size:18px;font-weight:700;color:'+co+'">'+f+'</span></div>';h+='<div class=dash-stat><span>空白</span><span style="font-size:18px;font-weight:700">'+(48-f)+'</span></div>';h+='<div class=dash-chart-bar><div class=dash-chart-fill style=width:'+p+"%;background:"+co+"></div></div></div>";t+=f}h+='<div class=dash-summary><div><div style="font-size:32px;font-weight:800;color:var(--blue)">'+t+'</div><div>总计</div></div>';h+='<div><div style="font-size:32px;font-weight:800;color:var(--cyan)">'+Math.round((t/144)*100)+'%</div><div>完成率</div></div>';h+='<div><div style="font-size:32px;font-weight:800;color:var(--red)">'+(144-t)+'</div><div>空白</div></div></div>';document.getElementById("dash-content").innerHTML=h;document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active")});document.getElementById("view-dashboard").classList.add("active")}
 function closeDashboard(){document.querySelectorAll(".view").forEach(function(v){v.classList.remove("active")});document.getElementById("view-main").classList.add("active");updateCounts()}
