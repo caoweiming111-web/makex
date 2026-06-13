@@ -415,7 +415,7 @@ var hh=82
 var infoH=20+fh(name,fw)+fh(subtitle,fw)+fh(eq,fw)+8
 var objH=20+Math.max(wrapH(obj||'(未填写)',fw,tctx,lh),lh)+8
 var proH=20+Math.max(wrapH(pro||'(未填写)',fw,tctx,lh),lh)
-var H=Math.ceil(82+hh+infoH+objH+proH+24+20+p+150)
+var minFooterY=Math.max(200,82+hh+infoH+objH+proH+80);var H=8000;
 
 var cv=document.createElement('canvas');cv.width=W;cv.height=H;var cx=cv.getContext('2d')
 
@@ -523,7 +523,7 @@ ypos=secLabel('课程基本流程',x,ypos,catColor)
 ypos=drawText(pro||'(未填写)',x+cw-24-20,ypos,cw-24-24,'#e0e4ea',14)
 
 // Footer
-ypos=Math.max(ypos+24,minFooterY)
+ypos=Math.max(ypos+24,Math.max(200,82+hh+infoH+objH+proH+80))
 cx.strokeStyle='rgba(41,121,255,0.06)';cx.lineWidth=1
 cx.beginPath();cx.moveTo(x,ypos);cx.lineTo(x+cw-48,ypos);cx.stroke()
 cx.font='11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';cx.fillStyle='#556688'
