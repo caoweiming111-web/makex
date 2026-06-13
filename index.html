@@ -390,22 +390,167 @@ var addBtn=document.createElement('div');addBtn.style.cssText='padding:12px 16px
 
 
 /* ===== GENERATE IMAGE ===== */
-async function generateImage(){
+function generateImage(){
 if(!docContext){alert('请先打开一个文档');return}
 saveDocumentData()
-try{
-var stream=await navigator.mediaDevices.getDisplayMedia({preferCurrentTab:true});
-var video=document.createElement('video');video.srcObject=stream;
-await new Promise(function(r){video.onloadedmetadata=r;video.play()});
-var cv=document.createElement('canvas');
-cv.width=video.videoWidth;cv.height=video.videoHeight;
-cv.getContext('2d').drawImage(video,0,0);
-stream.getTracks().forEach(function(t){t.stop()});
-var SN=pad(docContext.index+1);var catLabel=CATS[docContext.cat].label.toLowerCase();
-try{navigator.clipboard.write([new ClipboardItem({'image/png':await new Promise(function(r){cv.toBlob(r,'image/png')})})]);alert('截图已复制 ✓')}
-catch(e){var a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='makex_'+catLabel+'_'+SN+'.png';document.body.appendChild(a);a.click();document.body.removeChild(a);alert('截图已下载 ✓')}
-}catch(e){alert('截图失败，请点击"分享"按钮: '+e.message)}
+var slot=data[docContext.cat][docContext.index];var info=CATS[docContext.cat];var sn=pad(docContext.index+1)
+var name=slot.name||'(未命名)';var subtitle=slot.subtitle||'';var eq=slot.equipment||''
+var obj=(document.getElementById('doc-objectives').textContent||'').trim()
+var pro=(document.getElementById('doc-procedure').textContent||'').trim()
+var W=800;var p=36;var cw=W-p*2;var lh=24;var catColor=info.color
+
+function wrapH(text,maxW,font,lh2){
+var lines=text.split('\n');var total=0
+for(var l=0;l<lines.length;l++){var line=lines[l];if(!line.trim()){total+=lh2*0.3;continue}
+var cur='';for(var c=0;c<line.length;c++){var test=cur+line[c]
+if(font.measureText(test).width>maxW&&cur){total+=lh2;cur=line[c]}else{cur=test}}
+if(cur)total+=lh2}
+return total}
+
+var tmpC=document.createElement('canvas');var tctx=tmpC.getContext('2d')
+tctx.font='14px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'
+var fw=cw-24-24
+function fh(v,mw){return 14+Math.max(wrapH(v||'(未填写)',mw,tctx,lh),lh)}
+var hh=82
+var infoH=20+fh(name,fw)+fh(subtitle,fw)+fh(eq,fw)+8
+var objH=20+Math.max(wrapH(obj||'(未填写)',fw,tctx,lh),lh)+8
+var proH=20+Math.max(wrapH(pro||'(未填写)',fw,tctx,lh),lh)
+var H=Math.ceil(82+hh+infoH+objH+proH+24+20+p+150)
+
+var cv=document.createElement('canvas');cv.width=W;cv.height=H;var cx=cv.getContext('2d')
+
+// Background
+var bg=cx.createLinearGradient(0,0,0,H);bg.addColorStop(0,'#060a16');bg.addColorStop(0.5,'#0c1428');bg.addColorStop(1,'#060a16')
+cx.fillStyle=bg;cx.fillRect(0,0,W,H)
+
+// Grid
+cx.strokeStyle='rgba(41,121,255,0.025)';cx.lineWidth=1
+for(var x=0;x<W;x+=40){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke()}
+for(var y=0;y<H;y+=40){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke()}
+
+// Top glow
+var tg=cx.createRadialGradient(W/2,-80,0,W/2,-80,300);tg.addColorStop(0,catColor+'15');tg.addColorStop(1,'transparent')
+cx.fillStyle=tg;cx.fillRect(0,-200,W,400)
+
+// Card
+var cx0=p-6;var cy0=60;var cw0=W-(p-6)*2;var ch0=H-cy0-p+6
+function rrc(x,y,w,h,r){cx.beginPath();cx.moveTo(x+r,y);cx.lineTo(x+w-r,y);cx.quadraticCurveTo(x+w,y,x+w,y+r)
+cx.lineTo(x+w,y+h-r);cx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);cx.lineTo(x+r,y+h)
+cx.quadraticCurveTo(x,y+h,x,y+h-r);cx.lineTo(x,y+r);cx.quadraticCurveTo(x,y,x+r,y);cx.closePath()}
+rrc(cx0,cy0,cw0,ch0,16)
+cx.fillStyle='rgba(10,14,30,0.88)';cx.fill()
+cx.strokeStyle='rgba(41,121,255,0.08)';cx.lineWidth=1;cx.stroke()
+
+// Top accent bar
+var bg2=cx.createLinearGradient(cx0+1,0,cx0+cw0-1,0)
+bg2.addColorStop(0,catColor);bg2.addColorStop(0.15,catColor+'aa');bg2.addColorStop(1,'rgba(41,121,255,0.03)')
+rrc(cx0+1,cy0+1,cw0-2,4,[0,0,4,4]);cx.fillStyle=bg2;cx.fill()
+
+var y=cy0+22
+var x=cx0+24
+
+// Section helper
+function secTitle(label,x2,y2,color){
+cx.font='bold 15px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'
+cx.fillStyle=color;cx.fillText(label,x2,y2)
+// underline
+cx.strokeStyle=color+'44';cx.lineWidth=2;cx.beginPath();cx.moveTo(x2,y2+4);cx.lineTo(x2+150,y2+4);cx.stroke()
+return y2+18}
+
+function drawText(text,x2,y2,maxW,color,size){
+cx.font=size+'px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';cx.fillStyle=color
+var lines=text.split('\n');var cy=y2
+for(var l=0;l<lines.length;l++){var line=lines[l];if(!line.trim()){cy+=lh*0.3;continue}
+var cur='';for(var c=0;c<line.length;c++){var test=cur+line[c]
+if(cx.measureText(test).width>maxW&&cur){cx.fillText(cur,x2,cy);cy+=lh;cur=line[c]}else{cur=test}}
+if(cur){cx.fillText(cur,x2,cy);cy+=lh}}
+return cy}
+
+function secLabel(label,x2,y2,color){
+// colored left bar
+cx.fillStyle=color;cx.fillRect(x2-8,y2-10,3,18)
+cx.font='bold 14px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'
+cx.fillStyle=color;cx.fillText(label,x2,y2+2)
+return y2+20}
+
+function drawField(label,value,x2,y2,mw,color){
+cx.font='12px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'
+cx.fillStyle='#7a8aa0';cx.fillText(label,x2,y2-2)
+cx.font='14px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'
+cx.fillStyle=color||'#e0e4ea'
+var lines=value.split('\n');var cy=y2+18
+for(var l=0;l<lines.length;l++){var line=lines[l];if(!line.trim()){cy+=lh*0.3;continue}
+var cur='';for(var c=0;c<line.length;c++){var test=cur+line[c]
+if(cx.measureText(test).width>mw&&cur){cx.fillText(cur,x2,cy);cy+=lh;cur=line[c]}else{cur=test}}
+if(cur){cx.fillText(cur,x2,cy);cy+=lh}}
+return cy}
+
+// ===== Draw content =====
+var ypos=y
+
+// MakeX header
+cx.font='bold 13px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'
+cx.fillStyle='#556688';cx.fillText('MAKX',x,ypos);ypos+=4
+cx.font='24px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'
+var tg2=cx.createLinearGradient(x,0,x+300,0);tg2.addColorStop(0,catColor);tg2.addColorStop(0.5,catColor+'aa');tg2.addColorStop(1,'#e0e4ea')
+cx.fillStyle=tg2;cx.fillText(name,x,ypos+30);ypos+=40
+
+// Category badge
+cx.font='11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif'
+cx.fillStyle=catColor+'88'
+var badge=info.label+' · Slot '+sn
+cx.fillText(badge,x,ypos+4);ypos+=10
+
+// Divider
+cx.strokeStyle='rgba(41,121,255,0.08)';cx.lineWidth=1;cx.setLineDash([3,4])
+cx.beginPath();cx.moveTo(x,ypos+12);cx.lineTo(x+cw-48,ypos+12);cx.stroke();cx.setLineDash([])
+ypos+=28
+
+// Section 1: 课程信息
+ypos=secLabel('课程信息',x,ypos,catColor)
+ypos=drawField('课程名称',name,x+cw-24-20,ypos,cw-24-24,catColor)
+ypos=drawField('课程副标题',subtitle||'(未填写)',x+cw-24-20,ypos,cw-24-24,'#c0c8d4')
+ypos=drawField('课程使用器材',eq||'(未填写)',x+cw-24-20,ypos,cw-24-24,'#c0c8d4')
+ypos+=8
+
+// Section 2: 课程目标
+ypos=secLabel('课程目标',x,ypos,catColor)
+ypos=drawText(obj||'(未填写)',x+cw-24-20,ypos,cw-24-24,'#e0e4ea',14)
+ypos+=8
+
+// Section 3: 课程基本流程
+ypos=secLabel('课程基本流程',x,ypos,catColor)
+ypos=drawText(pro||'(未填写)',x+cw-24-20,ypos,cw-24-24,'#e0e4ea',14)
+
+// Footer
+ypos=Math.max(ypos+24,minFooterY)
+cx.strokeStyle='rgba(41,121,255,0.06)';cx.lineWidth=1
+cx.beginPath();cx.moveTo(x,ypos);cx.lineTo(x+cw-48,ypos);cx.stroke()
+cx.font='11px "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif';cx.fillStyle='#556688'
+var now=new Date();var ds=now.toLocaleDateString('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'})
+cx.fillText(ds+' · MakeX · '+info.label,x,ypos+20)
+
+// 根据实际绘制位置扩展 canvas（防止内容被截断）
+if(ypos+50>H){
+var newH=Math.ceil(ypos+80);
+var oldImg=cv.getContext('2d').getImageData(0,0,W,H);
+cv.height=newH;
+H=newH;
+var bg2=cx.createLinearGradient(0,0,0,H);bg2.addColorStop(0,'#060a16');bg2.addColorStop(0.5,'#0c1428');bg2.addColorStop(1,'#060a16');
+cx.fillStyle=bg2;cx.fillRect(0,0,W,H);
+cx.putImageData(oldImg,0,0);
 }
+
+var finalH=Math.min(Math.ceil(ypos+80),H);if(finalH<H){var cc=document.createElement('canvas');cc.width=W;cc.height=finalH;cc.getContext('2d').drawImage(cv,0,0);cv=cc}
+// Copy to clipboard
+cv.toBlob(function(blob){
+navigator.clipboard.write([new ClipboardItem({'image/png':blob})])
+.then(function(){alert('图片已复制到剪贴板 ?')})
+.catch(function(){
+var a=document.createElement('a');a.href=cv.toDataURL('image/png')
+a.download='makex_'+info.label.toLowerCase()+'_'+sn+'.png'
+document.body.appendChild(a);a.click();document.body.removeChild(a)
+alert('图片已下载到本地（浏览器限制，无法直接复制到剪贴板）')})})}
 /* ===== IMAGE TOOLBAR ===== */
 var selectedImg=null;
 document.addEventListener('click',function(e){
